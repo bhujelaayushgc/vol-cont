@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+
+import 'package:volcontrol/services/volume-control.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -14,39 +14,32 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  int volLevel = 50;
+  Map volData = {
+    'level': 0,
+    'isMute': false,
+    'icon': Icons.volume_mute
+  };
 
-  void getVol() async {
-    http.Response response = await http.get('http://192.168.0.104:3000/vol');
+  void setupVolume() async {
+    VolumeControl vc = VolumeControl(volLevel: 0);
+    await vc.getVol();
     setState(() {
-      volLevel = jsonDecode(response.body)['current_vol'];
-    });
-  }
-
-  void setVol(int vol) async {
-    Map data = {
-      'volLevel': vol
-    };
-    http.Response response = await http.post(
-      'http://192.168.0.104:3000/vol',
-      headers: {"Content-Type": "application/json"},
-      body: json.encode(data),
-//      headers: {"Content-Type": "application/json"}
-    );
-    setState(() {
-      volLevel = jsonDecode(response.body)['current_vol'];
+      volData = {
+        'level': vc.volLevel,
+        'isMute': vc.isMute,
+      };
     });
   }
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    getVol();
+    setupVolume();
   }
 
   @override
   Widget build(BuildContext context) {
+    IconData speaker = volData['isMute'] ? Icons.volume_off : Icons.volume_mute;
     return Scaffold(
       backgroundColor: Colors.grey[300],
       appBar: AppBar(
@@ -58,24 +51,71 @@ class _HomeState extends State<Home> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Text(
-            volLevel.toString(),
+            volData['level'].toString(),
             style: TextStyle(
               fontSize: 26
             ),
           ),
-          Slider(
-            onChanged: (double newVal) {
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              IconButton(
+                onPressed: () async {
+                  VolumeControl vc = VolumeControl(volLevel: volData['level']);
+                  await vc.volUpDown(false);
+                  setState(() {
+                    volData['level'] = vc.volLevel;
+                  });
+                },
+                icon: Icon(Icons.volume_down),
+                color: Colors.blueGrey[900],
+                iconSize: 40,
+              ),
+              Expanded(
+                child: Slider(
+                  onChanged: (double newVal) {
+                    setState(() {
+                      volData['level'] = newVal.round();
+                    });
+                  },
+                  onChangeEnd: (double newVal) async {
+                    VolumeControl vc = VolumeControl(volLevel: volData['level']);
+                    await vc.setVol(newVal.round());
+                    setState(() {
+                      volData['level'] = vc.volLevel;
+                    });
+                  },
+                  min: 0,
+                  max: 100,
+//        divisions: 50,
+                  value: volData['level'].toDouble(),
+                ),
+              ),
+              IconButton(
+                onPressed: () async {
+                  VolumeControl vc = VolumeControl(volLevel: volData['level']);
+                  await vc.volUpDown(true);
+                  setState(() {
+                    volData['level'] = vc.volLevel;
+                  });
+                },
+                icon: Icon(Icons.volume_up),
+                color: Colors.blueGrey[900],
+                iconSize: 40,
+              ),
+            ],
+          ),
+          IconButton(
+            onPressed: () async {
+              VolumeControl vc = VolumeControl(volLevel: volData['level']);
+              await vc.muteUnmute(volData['isMute']);
               setState(() {
-                volLevel = newVal.round();
+                volData['isMute'] = vc.isMute;
               });
             },
-            onChangeEnd: (double newVal) {
-              setVol(newVal.round());
-            },
-            min: 0,
-            max: 100,
-//        divisions: 50,
-            value: volLevel.toDouble(),
+            icon: Icon(speaker),
+            color: Colors.blueGrey[900],
+            iconSize: 60,
           )
         ],
       )
