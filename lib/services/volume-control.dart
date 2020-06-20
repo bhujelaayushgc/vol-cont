@@ -13,7 +13,6 @@ class VolumeControl {
       type = 'unmute';
     }
     http.Response response = await http.post('http://192.168.0.104:3000/$type');
-    print(response.body);
     isMute = jsonDecode(response.body)['isMute'];
   }
 

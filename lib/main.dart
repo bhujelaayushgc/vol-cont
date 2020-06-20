@@ -40,6 +40,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     IconData speaker = volData['isMute'] ? Icons.volume_off : Icons.volume_mute;
+    VolumeControl vc = VolumeControl(volLevel: volData['level']);
     return Scaffold(
       backgroundColor: Colors.grey[300],
       appBar: AppBar(
@@ -61,7 +62,6 @@ class _HomeState extends State<Home> {
             children: <Widget>[
               IconButton(
                 onPressed: () async {
-                  VolumeControl vc = VolumeControl(volLevel: volData['level']);
                   await vc.volUpDown(false);
                   setState(() {
                     volData['level'] = vc.volLevel;
@@ -79,7 +79,6 @@ class _HomeState extends State<Home> {
                     });
                   },
                   onChangeEnd: (double newVal) async {
-                    VolumeControl vc = VolumeControl(volLevel: volData['level']);
                     await vc.setVol(newVal.round());
                     setState(() {
                       volData['level'] = vc.volLevel;
@@ -93,7 +92,6 @@ class _HomeState extends State<Home> {
               ),
               IconButton(
                 onPressed: () async {
-                  VolumeControl vc = VolumeControl(volLevel: volData['level']);
                   await vc.volUpDown(true);
                   setState(() {
                     volData['level'] = vc.volLevel;
@@ -107,7 +105,6 @@ class _HomeState extends State<Home> {
           ),
           IconButton(
             onPressed: () async {
-              VolumeControl vc = VolumeControl(volLevel: volData['level']);
               await vc.muteUnmute(volData['isMute']);
               setState(() {
                 volData['isMute'] = vc.isMute;
